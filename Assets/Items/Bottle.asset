@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4359340580c144bb485405b778e8809a, type: 3}
+  m_Name: Bottle
+  m_EditorClassIdentifier: 
+  itemName: Bottle
+  itemSprite: {fileID: 21300000, guid: 2cbc50aa13fa64262855cc2d64b83258, type: 3}
+  itemDescription: Use this on a cow to fill it up!
+  itemType: 0
+  toolType: 4
+  seedType: 0
+  itemStat: 0
+  maxStackSize: 99
+  ItemPrefab: {fileID: 0}
+  harvestItem: {fileID: 0}
+  seedItem: {fileID: 0}
+  harvestYield: 1
+  seedYield: 1
+  sellPrice: 2
+  attackDamage: 0
+  healAmount: 0
+  buyPrice: 1
+  canSell: 1
+  canBuy: 1

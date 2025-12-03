@@ -1,0 +1,21 @@
+# Unity ignored folders
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+MemoryCaptures/
+Build/
+Builds/
+AcreLife_WebGL_*/
+
+# Visual Studio / IDE
+*.csproj
+*.sln
+.vs/
+*.user
+*.userprefs
+
+# OS junk
+.DS_Store
+Thumbs.db
