@@ -97,16 +97,16 @@ public class PlayerCombat : MonoBehaviour
         float totalDamage = baseDamage + weapon.attackDamage;
         
         Vector3 attackDirection = orientation != null ? orientation.forward : transform.forward;
+        Vector3 attackOrigin = transform.position + Vector3.up * 0.5f;
         
-        Debug.Log($"Attacking with {weapon.itemName} for {totalDamage} damage!");
-        
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
+        Collider[] hitColliders = Physics.OverlapSphere(attackOrigin, attackRange);
         
         foreach (Collider col in hitColliders)
         {
             if (col.gameObject == gameObject) continue;
             
-            Vector3 directionToTarget = (col.transform.position - transform.position).normalized;
+            Vector3 targetCenter = col.bounds.center;
+            Vector3 directionToTarget = (targetCenter - attackOrigin).normalized;
             float angleToTarget = Vector3.Angle(attackDirection, directionToTarget);
             
             if (angleToTarget > attackAngle / 2f) continue;
@@ -115,7 +115,6 @@ public class PlayerCombat : MonoBehaviour
             if (targetHealth != null)
             {
                 targetHealth.TakeDamage(totalDamage);
-                Debug.Log($"Hit {col.gameObject.name} for {totalDamage} damage!");
             }
         }
     }
@@ -142,16 +141,17 @@ public class PlayerCombat : MonoBehaviour
         if (!showDebugGizmos) return;
         
         Vector3 attackDirection = orientation != null ? orientation.forward : transform.forward;
+        Vector3 attackOrigin = transform.position + Vector3.up * 0.5f;
         
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.DrawWireSphere(attackOrigin, attackRange);
         
         Vector3 rightBoundary = Quaternion.Euler(0, attackAngle / 2f, 0) * attackDirection * attackRange;
         Vector3 leftBoundary = Quaternion.Euler(0, -attackAngle / 2f, 0) * attackDirection * attackRange;
         
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
-        Gizmos.DrawLine(transform.position, transform.position + leftBoundary);
-        Gizmos.DrawLine(transform.position, transform.position + attackDirection * attackRange);
+        Gizmos.DrawLine(attackOrigin, attackOrigin + rightBoundary);
+        Gizmos.DrawLine(attackOrigin, attackOrigin + leftBoundary);
+        Gizmos.DrawLine(attackOrigin, attackOrigin + attackDirection * attackRange);
     }
 }
