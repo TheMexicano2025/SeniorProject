@@ -2,20 +2,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// this helper script auto-fixes all item slot references in the inventory
+// run this from the context menu if slots aren't showing items correctly
 public class FixItemSlotReferences : MonoBehaviour
 {
     [Header("Global Description UI (Assign These)")]
-    [Tooltip("Drag the /InvDesc/Item Image GameObject here")]
     public Image invDescItemImage;
-    
-    [Tooltip("Drag the /InvDesc/Description/ItemNameText GameObject here")]
     public TMP_Text invDescItemName;
-    
-    [Tooltip("Drag the /InvDesc/Description/DescriptionText GameObject here")]
     public TMP_Text invDescText;
 
     [Header("Inventory Manager")]
-    [Tooltip("Drag the InventoryCanvas GameObject here")]
     public InvManager inventoryManager;
 
     [Header("Optional - Empty Sprite")]
@@ -25,13 +21,11 @@ public class FixItemSlotReferences : MonoBehaviour
     public void FixAllSlots()
     {
         ItemSlot[] allSlots = GetComponentsInChildren<ItemSlot>();
-        
-        Debug.Log($"Found {allSlots.Length} ItemSlot components to fix");
-
         int fixedCount = 0;
 
         foreach (ItemSlot slot in allSlots)
         {
+            // find and assign ItemImage
             Transform itemImageTransform = slot.transform.Find("ItemImage");
             if (itemImageTransform != null)
             {
@@ -42,6 +36,7 @@ public class FixItemSlotReferences : MonoBehaviour
                 }
             }
 
+            // find and assign QuantityText
             Transform quantityTextTransform = slot.transform.Find("QuantityText");
             if (quantityTextTransform != null)
             {
@@ -52,12 +47,14 @@ public class FixItemSlotReferences : MonoBehaviour
                 }
             }
 
+            // find and assign SelectedPanel
             Transform selectedPanelTransform = slot.transform.Find("SelectedPanel");
             if (selectedPanelTransform != null)
             {
                 slot.selectedShader = selectedPanelTransform.gameObject;
             }
 
+            // assign global description UI
             if (invDescItemImage != null)
             {
                 slot.itemDescImage = invDescItemImage;
@@ -85,7 +82,5 @@ public class FixItemSlotReferences : MonoBehaviour
 
             fixedCount++;
         }
-
-        Debug.Log($"Successfully fixed {fixedCount} ItemSlot references!");
     }
 }

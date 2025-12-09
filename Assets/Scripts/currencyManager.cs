@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+// this script manages the player's money
+// other scripts use this to check if player can afford items
 public class CurrencyManager : MonoBehaviour
 {
     public static CurrencyManager Instance { get; private set; }
@@ -16,6 +18,7 @@ public class CurrencyManager : MonoBehaviour
 
     private void Awake()
     {
+        // singleton pattern so there's only one currency manager
         if (Instance == null)
         {
             Instance = this;
@@ -45,35 +48,20 @@ public class CurrencyManager : MonoBehaviour
 
     public bool AddMoney(int amount)
     {
-        if (amount < 0)
-        {
-            Debug.LogWarning("Cannot add negative money. Use RemoveMoney instead.");
-            return false;
-        }
+        if (amount < 0) return false;
 
         currentMoney += amount;
         UpdateMoneyUI();
-        Debug.Log($"Added ${amount}. Current money: ${currentMoney}");
         return true;
     }
 
     public bool RemoveMoney(int amount)
     {
-        if (amount < 0)
-        {
-            Debug.LogWarning("Cannot remove negative money. Use AddMoney instead.");
-            return false;
-        }
-
-        if (!CanAfford(amount))
-        {
-            Debug.LogWarning($"Not enough money! Need ${amount}, have ${currentMoney}");
-            return false;
-        }
+        if (amount < 0) return false;
+        if (!CanAfford(amount)) return false;
 
         currentMoney -= amount;
         UpdateMoneyUI();
-        Debug.Log($"Removed ${amount}. Current money: ${currentMoney}");
         return true;
     }
 
@@ -85,4 +73,3 @@ public class CurrencyManager : MonoBehaviour
         }
     }
 }
-

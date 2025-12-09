@@ -1,14 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class FenceSlip : MonoBehaviour
 {
     [Range(0f, 100f)]
     public float slipThroughChance = 85f;
-    
     public float slipThroughCooldown = 2f;
     public float teleportDistance = 2.5f;
+    public float groundCheckDistance = 10f;
+    public LayerMask groundLayer;
     
     private Dictionary<Collider, float> lastSlipAttempts = new Dictionary<Collider, float>();
     
@@ -42,25 +44,24 @@ public class FenceSlip : MonoBehaviour
         lastSlipAttempts[predatorCollider] = Time.time;
         
         float roll = Random.Range(0f, 100f);
-        Debug.Log($"<color=cyan>Rolling dice: {roll:F2} vs {slipThroughChance}</color>");
         
         if (roll <= slipThroughChance)
         {
-            Debug.Log("<color=green>SUCCESS! Predator slipping through!</color>");
             StartCoroutine(TeleportThroughFence(collision));
-        }
-        else
-        {
-            Debug.Log($"<color=red>FAILED! Predator blocked. Will retry in {slipThroughCooldown} seconds.</color>");
         }
     }
     
     private IEnumerator TeleportThroughFence(Collision collision)
     {
         Collider predatorCollider = collision.collider;
-        Rigidbody predatorRb = collision.rigidbody;
         Transform predatorTransform = predatorCollider.transform;
+        NavMeshAgent predatorAgent = predatorCollider.GetComponent<NavMeshAgent>();
         Collider fenceCollider = GetComponent<Collider>();
+        
+        if (predatorAgent != null)
+        {
+            predatorAgent.enabled = false;
+        }
         
         Physics.IgnoreCollision(fenceCollider, predatorCollider, true);
         
@@ -68,18 +69,26 @@ public class FenceSlip : MonoBehaviour
         throughDirection.y = 0;
         throughDirection.Normalize();
         
-        Vector3 oldPosition = predatorTransform.position;
-        Vector3 teleportPosition = oldPosition + (throughDirection * teleportDistance);
+        Vector3 teleportPosition = predatorTransform.position + (throughDirection * teleportDistance);
         
-        Debug.Log($"<color=lime>Predator facing: {throughDirection}</color>");
-        Debug.Log($"<color=lime>Teleporting from {oldPosition} to {teleportPosition}</color>");
+        RaycastHit hit;
+        if (Physics.Raycast(teleportPosition + Vector3.up * 5f, Vector3.down, out hit, groundCheckDistance, groundLayer))
+        {
+            teleportPosition.y = hit.point.y;
+        }
         
         predatorTransform.position = teleportPosition;
         
-        if (predatorRb != null)
+        yield return new WaitForSeconds(0.1f);
+        
+        if (predatorAgent != null)
         {
-            predatorRb.velocity = throughDirection * 3.5f;
-            Debug.Log($"<color=lime>Setting velocity: {predatorRb.velocity}</color>");
+            predatorAgent.enabled = true;
+            
+            if (predatorAgent.isOnNavMesh)
+            {
+                predatorAgent.Warp(teleportPosition);
+            }
         }
         
         yield return new WaitForSeconds(1f);
@@ -90,7 +99,5 @@ public class FenceSlip : MonoBehaviour
         {
             lastSlipAttempts.Remove(predatorCollider);
         }
-        
-        Debug.Log("<color=grey>Collision re-enabled</color>");
     }
 }

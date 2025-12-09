@@ -10,11 +10,6 @@ public class terrainInteractable : MonoBehaviour, Interactable
         if (farmingManager == null)
         {
             farmingManager = FindObjectOfType<farmManager>();
-            
-            if (farmingManager == null)
-            {
-                Debug.LogWarning("TerrainInteractable: No FarmingManager found in scene!");
-            }
         }
     }
 
@@ -34,11 +29,7 @@ public class terrainInteractable : MonoBehaviour, Interactable
 
     public void Interact(GameObject player)
     {
-        if (farmingManager == null)
-        {
-            Debug.LogWarning("Cannot till - no FarmingManager!");
-            return;
-        }
+        if (farmingManager == null) return;
 
         Transform orientation = player.transform.Find("Orientation");
         
@@ -65,10 +56,6 @@ public class terrainInteractable : MonoBehaviour, Interactable
         {
             Vector3 tillPosition = new Vector3(tillPositionHorizontal.x, groundHit.point.y + 0.02f, tillPositionHorizontal.z);
             farmingManager.TillSoil(tillPosition, player);
-        }
-        else
-        {
-            Debug.LogWarning("Cannot till - no ground found at target position!");
         }
     }
 }

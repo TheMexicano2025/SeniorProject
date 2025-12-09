@@ -6,42 +6,21 @@ using TMPro;
 public class SleepManager : MonoBehaviour, Interactable
 {
     [Header("Sleep Settings")]
-    [Tooltip("Should player be healed on sleep?")]
     public bool healOnSleep = true;
-    
-    [Tooltip("Time to skip to when sleeping (6 AM recommended)")]
     public float wakeUpTime = 6f;
-    
-    [Tooltip("Can only sleep at night?")]
     public bool nightOnlyRestriction = true;
-    
-    [Tooltip("Must kill all coyotes before sleeping?")]
     public bool requireNoCoyotes = true;
     
     [Header("References")]
-    [Tooltip("The DayNightManager")]
     public DayNightManager dayNightManager;
-    
-    [Tooltip("The PredatorSpawner")]
     public PredatorSpawner predatorSpawner;
-    
-    [Tooltip("The FadeController")]
     public FadeController fadeController;
-    
-    [Tooltip("Day popup text (Day X)")]
     public TextMeshProUGUI dayPopupText;
-    
-    [Tooltip("Day popup canvas group (for fading)")]
     public CanvasGroup dayPopupCanvasGroup;
-    
-    [Tooltip("Player Health component")]
     public Health playerHealth;
     
     [Header("Popup Settings")]
-    [Tooltip("How long the day popup stays visible")]
     public float popupDuration = 3f;
-    
-    [Tooltip("Fade speed for popup")]
     public float popupFadeSpeed = 2f;
     
     private bool isSleeping = false;
@@ -124,7 +103,10 @@ public class SleepManager : MonoBehaviour, Interactable
     {
         isSleeping = true;
         
-        Debug.Log("Going to sleep...");
+        GameManager gameManager = GameManager.Instance;
+        int currentDay = dayNightManager != null ? dayNightManager.GetCurrentDay() : 1;
+        bool isNight = dayNightManager != null && dayNightManager.IsNight();
+        bool shouldCheckVictory = gameManager != null && currentDay >= gameManager.GetDaysToSurvive() && isNight;
         
         if (fadeController != null)
         {
@@ -134,16 +116,23 @@ public class SleepManager : MonoBehaviour, Interactable
         
         yield return new WaitForSeconds(0.5f);
         
+        if (shouldCheckVictory)
+        {
+            if (gameManager != null)
+            {
+                gameManager.TriggerVictory();
+            }
+            yield break;
+        }
+        
         if (healOnSleep && playerHealth != null)
         {
             playerHealth.Heal(playerHealth.maxHealth);
-            Debug.Log("Player healed on sleep!");
         }
         
         if (dayNightManager != null)
         {
             dayNightManager.SkipToTime(wakeUpTime);
-            Debug.Log($"Skipped to {wakeUpTime}:00 (morning)");
         }
         
         yield return new WaitForSeconds(0.5f);
@@ -160,8 +149,6 @@ public class SleepManager : MonoBehaviour, Interactable
         }
         
         isSleeping = false;
-        
-        Debug.Log("Woke up! Good morning!");
     }
 
     private void ShowDayPopup()

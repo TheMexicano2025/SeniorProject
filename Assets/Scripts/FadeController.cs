@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// this script fades the screen to black and back
+// used for scene transitions or teleporting
 public class FadeController : MonoBehaviour
 {
     [Header("Fade Settings")]
-    [Tooltip("The UI Image used for fading (black panel)")]
     public Image fadeImage;
-    
-    [Tooltip("How long the fade takes (seconds)")]
     public float fadeDuration = 1f;
-    
-    [Tooltip("Color to fade to (usually black)")]
     public Color fadeColor = Color.black;
     
     private static FadeController instance;
@@ -20,6 +17,7 @@ public class FadeController : MonoBehaviour
 
     private void Awake()
     {
+        // singleton so other scripts can easily access this
         if (instance == null)
         {
             instance = this;
@@ -45,11 +43,6 @@ public class FadeController : MonoBehaviour
             color.a = 0f;
             fadeImage.color = color;
             fadeImage.raycastTarget = false;
-            Debug.Log("FadeController initialized with Image: " + fadeImage.name);
-        }
-        else
-        {
-            Debug.LogError("FadeController: No fade image assigned or found!");
         }
     }
 
@@ -58,31 +51,32 @@ public class FadeController : MonoBehaviour
         get { return instance; }
     }
 
+    // fade from clear to black
     public void FadeOut(System.Action onComplete = null)
     {
-        Debug.Log("FadeOut called");
         if (currentFade != null) StopCoroutine(currentFade);
         currentFade = StartCoroutine(FadeCoroutine(0f, 1f, onComplete));
     }
 
+    // fade from black to clear
     public void FadeIn(System.Action onComplete = null)
     {
-        Debug.Log("FadeIn called");
         if (currentFade != null) StopCoroutine(currentFade);
         currentFade = StartCoroutine(FadeCoroutine(1f, 0f, onComplete));
     }
 
+    // fade out then fade back in
     public void FadeOutAndIn(System.Action onFadedOut = null, System.Action onFadedIn = null)
     {
         if (currentFade != null) StopCoroutine(currentFade);
         currentFade = StartCoroutine(FadeOutAndInCoroutine(onFadedOut, onFadedIn));
     }
 
+    // smoothly fade between two alpha values
     private IEnumerator FadeCoroutine(float startAlpha, float endAlpha, System.Action onComplete)
     {
         if (fadeImage == null)
         {
-            Debug.LogError("FadeController: No fade image assigned!");
             onComplete?.Invoke();
             yield break;
         }
@@ -91,8 +85,6 @@ public class FadeController : MonoBehaviour
         
         float elapsed = 0f;
         Color color = fadeColor;
-
-        Debug.Log($"Starting fade from {startAlpha} to {endAlpha}");
 
         while (elapsed < fadeDuration)
         {
@@ -105,8 +97,6 @@ public class FadeController : MonoBehaviour
 
         color.a = endAlpha;
         fadeImage.color = color;
-
-        Debug.Log($"Fade complete. Final alpha: {endAlpha}");
 
         onComplete?.Invoke();
         currentFade = null;

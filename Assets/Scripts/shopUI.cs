@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// this script controls the shop UI
+// it shows items you can buy from NPC and items you can sell
 public class ShopUI : MonoBehaviour
 {
     [Header("UI References")]
@@ -32,6 +34,7 @@ public class ShopUI : MonoBehaviour
 
     private void Update()
     {
+        // press escape to close shop
         if (shopPanel != null && shopPanel.activeSelf && Input.GetKeyDown(KeyCode.Escape))
         {
             CloseShop();
@@ -52,6 +55,7 @@ public class ShopUI : MonoBehaviour
             shopPanel.SetActive(true);
         }
 
+        // show cursor when shop is open
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -65,6 +69,7 @@ public class ShopUI : MonoBehaviour
             shopPanel.SetActive(false);
         }
 
+        // hide cursor when shop closes
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -85,6 +90,7 @@ public class ShopUI : MonoBehaviour
         PopulateSellItems();
     }
 
+    // fill buy tab with items from shop inventory
     private void PopulateBuyItems()
     {
         ClearContent(buyContent);
@@ -100,6 +106,7 @@ public class ShopUI : MonoBehaviour
         }
     }
 
+    // fill sell tab with items from player inventory
     private void PopulateSellItems()
     {
         ClearContent(sellContent);
@@ -118,6 +125,7 @@ public class ShopUI : MonoBehaviour
         }
     }
 
+    // create a button for buying or selling an item
     private void CreateShopButton(ItemSO item, Transform parent, bool isBuying)
     {
         if (shopItemButtonPrefab == null) return;
@@ -153,46 +161,27 @@ public class ShopUI : MonoBehaviour
 
     private void BuyItem(ItemSO item)
     {
-        if (CurrencyManager.Instance == null)
-        {
-            Debug.LogWarning("CurrencyManager not found!");
-            return;
-        }
-
-        if (!CurrencyManager.Instance.CanAfford(item.buyPrice))
-        {
-            Debug.Log($"Not enough money to buy {item.itemName}!");
-            return;
-        }
+        if (CurrencyManager.Instance == null) return;
+        if (!CurrencyManager.Instance.CanAfford(item.buyPrice)) return;
 
         if (CurrencyManager.Instance.RemoveMoney(item.buyPrice))
         {
             playerInventory.AddItem(item, 1);
-            Debug.Log($"Bought {item.itemName} for ${item.buyPrice}");
         }
     }
 
     private void SellItem(ItemSO item)
     {
-        if (CurrencyManager.Instance == null || playerInventory == null)
-        {
-            Debug.LogWarning("Required managers not found!");
-            return;
-        }
+        if (CurrencyManager.Instance == null || playerInventory == null) return;
 
         if (playerInventory.RemoveItem(item, 1))
         {
             CurrencyManager.Instance.AddMoney(item.sellPrice);
-            Debug.Log($"Sold {item.itemName} for ${item.sellPrice}");
-            
             PopulateSellItems();
-        }
-        else
-        {
-            Debug.Log($"You don't have any {item.itemName} to sell!");
         }
     }
 
+    // clear all items from a content panel
     private void ClearContent(Transform content)
     {
         if (content == null) return;

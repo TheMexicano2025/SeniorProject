@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script handles player interactions with cows
+// you can milk them with a bottle or feed them corn to breed
 public class CowInteraction : MonoBehaviour, Interactable
 {
     private Cow cow;
@@ -15,11 +17,13 @@ public class CowInteraction : MonoBehaviour, Interactable
 
     public bool CanInteract(GameObject player)
     {
+        // can't interact with dead cows
         if (health != null && health.IsDead())
         {
             return false;
         }
         
+        // can't interact with baby cows
         if (cow == null || cow.isBaby) return false;
         
         EquipManager equipManager = player.GetComponent<EquipManager>();
@@ -48,14 +52,15 @@ public class CowInteraction : MonoBehaviour, Interactable
         
         if (equippedItem == null) return;
         
+        // milk the cow if holding a bottle
         if (equippedItem.toolType == ItemSO.ToolType.Bottle || equippedItem.itemName.ToLower().Contains("bottle"))
         {
             if (cow.TryMilk(player, equippedItem))
             {
                 equipManager.RefreshEquippedItem();
-                Debug.Log("Successfully milked the cow!");
             }
         }
+        // feed corn to enter love mode
         else if (equippedItem.itemName.ToLower().Contains("corn"))
         {
             InvManager inventory = FindObjectOfType<InvManager>();
@@ -63,7 +68,6 @@ public class CowInteraction : MonoBehaviour, Interactable
             {
                 inventory.RemoveItem(equippedItem, 1);
                 cow.EnterLoveMode();
-                Debug.Log("Fed corn to cow! It's looking for a mate...");
             }
         }
     }

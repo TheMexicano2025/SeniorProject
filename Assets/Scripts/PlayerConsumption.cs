@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script lets the player eat food items to restore health
+// it checks if you're looking at something interactable before eating
 public class PlayerConsumption : MonoBehaviour
 {
     [Header("References")]
@@ -11,10 +13,11 @@ public class PlayerConsumption : MonoBehaviour
     public PlayerInteraction playerInteraction;
     
     [Header("Consumption Settings")]
-    public KeyCode consumeKey = KeyCode.E;
+    public KeyCode consumeKey = KeyCode.E; // same key as interact but context matters
 
     private void Start()
     {
+        // try to find all the components we need
         if (playerHealth == null)
         {
             playerHealth = GetComponent<Health>();
@@ -38,8 +41,10 @@ public class PlayerConsumption : MonoBehaviour
 
     private void Update()
     {
+        // only try to consume if E is pressed
         if (Input.GetKeyDown(consumeKey))
         {
+            // don't eat if we're looking at something we can interact with
             if (!IsLookingAtInteractable())
             {
                 TryConsumeEquippedItem();
@@ -47,6 +52,7 @@ public class PlayerConsumption : MonoBehaviour
         }
     }
 
+    // check if we're looking at something interactable like a cow or door
     private bool IsLookingAtInteractable()
     {
         if (playerInteraction == null) return false;
@@ -54,6 +60,7 @@ public class PlayerConsumption : MonoBehaviour
         Camera mainCam = Camera.main;
         if (mainCam == null) return false;
         
+        // shoot a ray from camera to see what we're looking at
         RaycastHit hit;
         if (Physics.Raycast(mainCam.transform.position, mainCam.transform.forward, out hit, playerInteraction.interactionRange, playerInteraction.interactableLayer))
         {
@@ -67,6 +74,7 @@ public class PlayerConsumption : MonoBehaviour
         return false;
     }
 
+    // try to eat the item currently in your hand
     private void TryConsumeEquippedItem()
     {
         if (equipManager == null || playerHealth == null)
@@ -76,32 +84,28 @@ public class PlayerConsumption : MonoBehaviour
         
         ItemSO equippedItem = equipManager.GetEquippedItem();
         
-        if (equippedItem == null)
+        // can't eat if no item or item doesn't heal
+        if (equippedItem == null || equippedItem.healAmount <= 0)
         {
             return;
         }
         
-        if (equippedItem.healAmount <= 0)
-        {
-            return;
-        }
-        
+        // don't eat if already at full health
         if (playerHealth.GetCurrentHealth() >= playerHealth.GetMaxHealth())
         {
-            Debug.Log("Already at full health!");
             return;
         }
         
+        // heal the player and remove the item from inventory
         playerHealth.Heal(equippedItem.healAmount);
         
         if (inventoryManager != null)
         {
             inventoryManager.RemoveItem(equippedItem, 1);
         }
-        
-        Debug.Log($"Consumed {equippedItem.itemName} and restored {equippedItem.healAmount} health!");
     }
 
+    // other scripts can call this to make the player consume a specific item
     public void ConsumeItem(ItemSO item)
     {
         if (item == null || item.healAmount <= 0 || playerHealth == null)
@@ -115,7 +119,5 @@ public class PlayerConsumption : MonoBehaviour
         {
             inventoryManager.RemoveItem(item, 1);
         }
-        
-        Debug.Log($"Consumed {item.itemName} and restored {item.healAmount} health!");
     }
 }

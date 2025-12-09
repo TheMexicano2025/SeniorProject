@@ -29,7 +29,7 @@ MonoBehaviour:
   seedItem: {fileID: 0}
   harvestYield: 1
   seedYield: 1
-  buyPrice: 2
+  buyPrice: 0
   sellPrice: 10
   canBuy: 0
   canSell: 1

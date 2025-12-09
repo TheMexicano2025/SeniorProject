@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script handles player movement including walking sprinting and jumping
+// it uses physics based movement with a rigidbody
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")] 
@@ -13,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
 
     public float jumpForce;
     public float jumpCooldown;
-    public float airMultiplier;
+    public float airMultiplier; // how much control you have while in air
     bool readyToJump;
 
     [Header("Keybinds")]
@@ -57,22 +59,20 @@ public class PlayerMovement : MonoBehaviour
         if (playerObj == null)
         {
             playerObj = transform.Find("PlayerObj");
-            if (playerObj == null)
-            {
-                Debug.LogWarning("PlayerObj not found! Please assign it in the Inspector.");
-            }
         }
     }
 
     private void Update()
     {
+        // check if player is touching ground
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f);
 
         MyInput();
         SpeedControl();
         StateHandler();
 
-        if(grounded)
+        // apply drag when grounded to slow down naturally
+        if (grounded)
             rb.drag = groundDrag;
         else
             rb.drag = 0;
@@ -82,6 +82,7 @@ public class PlayerMovement : MonoBehaviour
     {
         MovePlayer();
         
+        // prevent player from bouncing on top of cows
         Collider[] cowColliders = Physics.OverlapSphere(transform.position, 1f);
         foreach (Collider col in cowColliders)
         {
@@ -97,12 +98,13 @@ public class PlayerMovement : MonoBehaviour
         RotatePlayerModel();
     }
 
+    // read player input for movement and jumping
     private void MyInput()
     {
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        if(Input.GetKey(jumpKey) && readyToJump && grounded)
+        if (Input.GetKey(jumpKey) && readyToJump && grounded)
         {
             readyToJump = false;
             
@@ -112,9 +114,10 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // switch between walking sprinting and air states
     private void StateHandler()
     {
-        if(grounded && Input.GetKey(sprintKey))
+        if (grounded && Input.GetKey(sprintKey))
         {
             state = MovementState.sprinting;
             moveSpeed = sprintSpeed;
@@ -130,16 +133,18 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // apply movement force based on input direction
     private void MovePlayer()
     {
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
-        if(grounded)
+        if (grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
-        else if(!grounded)
+        else if (!grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
     }
 
+    // rotate the player model to face movement direction
     private void RotatePlayerModel()
     {
         if (playerObj == null)
@@ -157,17 +162,19 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // prevent player from moving faster than max speed
     private void SpeedControl()
     {
         Vector3 flatVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
 
-        if(flatVel.magnitude > moveSpeed)
+        if (flatVel.magnitude > moveSpeed)
         {
             Vector3 limitedVel = flatVel.normalized * moveSpeed;
             rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
         }
     }
 
+    // make player jump upward
     private void Jump()
     {
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
@@ -179,6 +186,7 @@ public class PlayerMovement : MonoBehaviour
         readyToJump = true;
     }
 
+    // prevent bouncing when landing on cows
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Cow"))
@@ -196,6 +204,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // keep player from bouncing while standing on cows
     private void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.CompareTag("Cow"))

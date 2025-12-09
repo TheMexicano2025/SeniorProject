@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script displays the currently equipped item in the player's hand
+// it syncs with the hotbar to show what you have selected
 public class EquipManager : MonoBehaviour
 {
     [Header("References")]
@@ -27,6 +29,7 @@ public class EquipManager : MonoBehaviour
         updateEquip();
     }
 
+    // check if the equipped item needs to update
     private void updateEquip()
     {
         if (HBManager == null || inventoryManager == null || handPosition == null)
@@ -34,6 +37,7 @@ public class EquipManager : MonoBehaviour
         
         int selectedSlot = HBManager.getSelect();
 
+        // hotbar slot changed
         if (selectedSlot != lastSlot)
         {
             lastSlot = selectedSlot;
@@ -43,10 +47,12 @@ public class EquipManager : MonoBehaviour
         {
             ItemSlot currentSlot = inventoryManager.itemSlot[selectedSlot];
             
+            // item was consumed or removed
             if (currentEquippedItem != null && currentSlot.quantity <= 0)
             {
                 itemFromSlot(selectedSlot);
             }
+            // item was added to empty slot
             else if (currentEquippedItem == null && currentSlot.quantity > 0)
             {
                 itemFromSlot(selectedSlot);
@@ -54,8 +60,10 @@ public class EquipManager : MonoBehaviour
         }
     }
 
+    // update the item in hand based on hotbar slot
     private void itemFromSlot(int slotIndex)
     {
+        // destroy old item
         if (currentItem != null)
         {
             Destroy(currentItem);
@@ -75,6 +83,7 @@ public class EquipManager : MonoBehaviour
         }
     }
 
+    // create a visual representation of the item in hand
     private void createItem(ItemSO itemData)
     {
         GameObject equippedItem = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -87,6 +96,7 @@ public class EquipManager : MonoBehaviour
 
         Destroy(equippedItem.GetComponent<Collider>());
 
+        // apply the item sprite as a texture
         Renderer renderer = equippedItem.GetComponent<Renderer>();
         renderer.material = new Material(Shader.Find("Sprites/Default"));
         renderer.material.mainTexture = itemData.itemSprite.texture;
@@ -99,9 +109,9 @@ public class EquipManager : MonoBehaviour
         return currentEquippedItem;
     }
 
+    // refresh the hand item after using or consuming
     public void RefreshEquippedItem()
     {
         itemFromSlot(lastSlot);
     }
-
 }

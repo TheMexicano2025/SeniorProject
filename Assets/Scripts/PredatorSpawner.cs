@@ -3,42 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+// this script spawns predators each night
+// difficulty scales up with each night survived
 public class PredatorSpawner : MonoBehaviour
 {
     [Header("Spawning Settings")]
-    [Tooltip("The coyote prefab to spawn")]
     public GameObject predatorPrefab;
-    
-    [Tooltip("Spawn points around the farm (set these manually)")]
     public Transform[] spawnPoints;
-    
-    [Tooltip("Minimum coyotes to spawn on first night")]
     public int minStartCoyotes = 2;
-    
-    [Tooltip("Maximum coyotes to spawn on first night")]
     public int maxStartCoyotes = 3;
-    
-    [Tooltip("How many additional coyotes per night")]
-    public int coyotesPerNight = 1;
-    
-    [Tooltip("Maximum night difficulty (stops scaling after this)")]
-    public int maxDifficultyNight = 5;
-    
-    [Tooltip("Delay between spawning each coyote (seconds)")]
-    public float spawnDelay = 2f;
+    public int coyotesPerNight = 1; // extra coyotes per night
+    public int maxDifficultyNight = 5; // difficulty caps at this night
+    public float spawnDelay = 2f; // delay between each spawn
     
     [Header("Future Scaling (Not Yet Implemented)")]
-    [Tooltip("Health bonus per night")]
     public float healthPerNight = 10f;
-    
-    [Tooltip("Damage bonus per night")]
     public float damagePerNight = 2f;
     
     [Header("References")]
-    [Tooltip("Reference to DayNightManager")]
     public DayNightManager dayNightManager;
-    
-    [Tooltip("UI Text showing remaining coyotes")]
     public TextMeshProUGUI coyoteCounterText;
     
     [Header("Debug")]
@@ -67,6 +50,7 @@ public class PredatorSpawner : MonoBehaviour
         {
             bool isNight = dayNightManager.IsNight();
             
+            // spawn predators when night starts
             if (isNight && !hasSpawnedTonight)
             {
                 currentNightCounter = dayNightManager.GetNightsSurvived() + 1;
@@ -80,13 +64,10 @@ public class PredatorSpawner : MonoBehaviour
         }
     }
 
+    // spawn predators based on current night number
     private void SpawnNightPredators()
     {
-        if (spawnPoints == null || spawnPoints.Length == 0)
-        {
-            Debug.LogWarning("PredatorSpawner: No spawn points assigned!");
-            return;
-        }
+        if (spawnPoints == null || spawnPoints.Length == 0) return;
         
         int nightDifficulty = Mathf.Min(currentNightCounter, maxDifficultyNight);
         
@@ -95,33 +76,28 @@ public class PredatorSpawner : MonoBehaviour
         
         int coyotesToSpawn = Random.Range(minCoyotes, maxCoyotes + 1);
         
-        Debug.Log($"Night {currentNightCounter}: Spawning {coyotesToSpawn} coyotes (Difficulty: {nightDifficulty})");
-        
         StartCoroutine(SpawnPredatorsOverTime(coyotesToSpawn, nightDifficulty));
     }
 
-    private System.Collections.IEnumerator SpawnPredatorsOverTime(int count, int nightDifficulty)
+    // spawn predators one at a time with delay
+    private IEnumerator SpawnPredatorsOverTime(int count, int nightDifficulty)
     {
         for (int i = 0; i < count; i++)
         {
             SpawnSinglePredator(nightDifficulty);
-            yield return new UnityEngine.WaitForSeconds(spawnDelay);
+            yield return new WaitForSeconds(spawnDelay);
         }
-        
-        Debug.Log($"Finished spawning {count} coyotes!");
     }
 
+    // spawn one predator with scaled health and damage
     private void SpawnSinglePredator(int nightDifficulty)
     {
-        if (predatorPrefab == null)
-        {
-            Debug.LogError("PredatorSpawner: No predator prefab assigned!");
-            return;
-        }
+        if (predatorPrefab == null) return;
         
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
         Vector3 spawnPosition = spawnPoint.position;
         
+        // add random offset so they don't all spawn in exact same spot
         spawnPosition += new Vector3(
             Random.Range(-2f, 2f),
             0f,
@@ -130,6 +106,7 @@ public class PredatorSpawner : MonoBehaviour
         
         GameObject coyote = Instantiate(predatorPrefab, spawnPosition, Quaternion.identity);
         
+        // scale health based on night
         Health health = coyote.GetComponent<Health>();
         if (health != null && nightDifficulty > 1)
         {
@@ -137,6 +114,7 @@ public class PredatorSpawner : MonoBehaviour
             health.maxHealth += bonusHealth;
         }
         
+        // scale damage based on night
         Predator predator = coyote.GetComponent<Predator>();
         if (predator != null && nightDifficulty > 1)
         {
@@ -145,15 +123,15 @@ public class PredatorSpawner : MonoBehaviour
         }
         
         activePredators.Add(coyote);
-        
-        Debug.Log($"Spawned coyote at {spawnPosition} (Night {nightDifficulty})");
     }
 
+    // remove dead predators from the list
     private void CleanupDeadPredators()
     {
         activePredators.RemoveAll(predator => predator == null);
     }
 
+    // update UI showing how many coyotes are alive
     private void UpdateCoyoteCounter()
     {
         if (coyoteCounterText != null)
@@ -178,6 +156,7 @@ public class PredatorSpawner : MonoBehaviour
         return activePredators.Count;
     }
 
+    // draw spawn points in editor
     private void OnDrawGizmosSelected()
     {
         if (!showSpawnGizmos || spawnPoints == null) return;
@@ -193,4 +172,3 @@ public class PredatorSpawner : MonoBehaviour
         }
     }
 }
-

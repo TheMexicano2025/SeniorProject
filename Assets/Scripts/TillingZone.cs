@@ -2,13 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script defines an area where the player can till soil
+// it prevents tilling outside the farm plot
 public class TillingZone : MonoBehaviour
 {
     [Header("Zone Settings")]
-    [Tooltip("Visual color of the zone bounds (Scene view only)")]
     public Color zoneColor = new Color(0f, 1f, 0f, 0.2f);
-    
-    [Tooltip("Show zone bounds in Scene view")]
     public bool showGizmos = true;
 
     private BoxCollider zoneCollider;
@@ -18,13 +17,13 @@ public class TillingZone : MonoBehaviour
         zoneCollider = GetComponent<BoxCollider>();
         if (zoneCollider == null)
         {
-            Debug.LogWarning("TillingZone: No BoxCollider found! Adding one...");
             zoneCollider = gameObject.AddComponent<BoxCollider>();
         }
         
         zoneCollider.isTrigger = true;
     }
 
+    // check if a world position is inside this zone
     public bool IsPositionInZone(Vector3 position)
     {
         if (zoneCollider == null) return false;
@@ -37,6 +36,7 @@ public class TillingZone : MonoBehaviour
         return inXRange && inZRange;
     }
 
+    // draw the zone boundaries in the editor
     private void OnDrawGizmos()
     {
         if (!showGizmos) return;

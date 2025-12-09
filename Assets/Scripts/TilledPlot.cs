@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// this script controls a single tilled plot of soil
+// it handles planting seeds growing crops and harvesting
 public class TilledPlot : MonoBehaviour, Interactable
 {
     [Header("Plot State")]
@@ -10,7 +12,6 @@ public class TilledPlot : MonoBehaviour, Interactable
     public GameObject plantVisual;
 
     [Header("Growth Settings")]
-    [Tooltip("Hours between each growth stage")]
     public float hoursPerStage = 2f;
     
     [Header("Growth Stage Prefabs")]
@@ -19,7 +20,7 @@ public class TilledPlot : MonoBehaviour, Interactable
     [HideInInspector] public GameObject stage2Prefab;
     [HideInInspector] public GameObject stage3Prefab;
     
-    private float plantedAtHour = 0f;
+    private float plantedAtHour = 0f; // what hour the seed was planted
     private DayNightManager dayNightManager;
 
     private void Start()
@@ -34,11 +35,13 @@ public class TilledPlot : MonoBehaviour, Interactable
             float currentTime = dayNightManager.GetCurrentTime();
             float hoursPassed = currentTime - plantedAtHour;
             
+            // handle time wrapping around midnight
             if (hoursPassed < 0) hoursPassed += 24f;
 
             int targetStage = Mathf.FloorToInt(hoursPassed / hoursPerStage);
             targetStage = Mathf.Clamp(targetStage, 0, maxGrowthStage);
 
+            // update visual if crop grew to next stage
             if (targetStage > growthStage)
             {
                 growthStage = targetStage;
@@ -56,9 +59,11 @@ public class TilledPlot : MonoBehaviour, Interactable
 
     public bool CanInteract(GameObject player)
     {
+        // can harvest if fully grown
         if (isPlanted && growthStage >= maxGrowthStage) return true;
         if (isPlanted) return false;
 
+        // can plant if holding seeds
         EquipManager equipManager = player.GetComponent<EquipManager>();
         if (equipManager == null) return false;
 
@@ -68,12 +73,14 @@ public class TilledPlot : MonoBehaviour, Interactable
 
     public void Interact(GameObject player)
     {
+        // harvest if fully grown
         if (isPlanted && growthStage >= maxGrowthStage)
         {
             Harvest(player);
             return;
         }
 
+        // try to plant seeds
         EquipManager equipManager = player.GetComponent<EquipManager>();
         if (equipManager == null) return;
 
@@ -84,8 +91,10 @@ public class TilledPlot : MonoBehaviour, Interactable
         }
     }
 
+    // plant a seed in this plot
     private void PlantSeed(ItemSO seed, GameObject player)
     {
+        // remember what time we planted
         if (dayNightManager != null)
         {
             plantedAtHour = dayNightManager.GetCurrentTime();
@@ -97,15 +106,15 @@ public class TilledPlot : MonoBehaviour, Interactable
         
         CreatePlantVisual();
 
+        // remove seed from inventory
         InvManager inventoryManager = FindObjectOfType<InvManager>();
         if (inventoryManager != null)
         {
             inventoryManager.RemoveItem(seed, 1);
         }
-
-        Debug.Log($"Planted {seed.itemName}");
     }
 
+    // create the visual plant object
     private void CreatePlantVisual()
     {
         GameObject prefabToUse = GetPrefabForStage(growthStage);
@@ -122,6 +131,7 @@ public class TilledPlot : MonoBehaviour, Interactable
         }
         else
         {
+            // fallback simple sphere if no prefab
             plantVisual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             plantVisual.transform.SetParent(transform);
             plantVisual.transform.localPosition = Vector3.up * 0.5f;
@@ -131,6 +141,7 @@ public class TilledPlot : MonoBehaviour, Interactable
         }
     }
 
+    // update the plant visual when it grows to next stage
     private void UpdatePlantVisual()
     {
         if (plantVisual != null)
@@ -144,6 +155,7 @@ public class TilledPlot : MonoBehaviour, Interactable
         {
             plantVisual = Instantiate(prefabToUse, transform);
             
+            // scale up as plant grows
             float heightByStage = 1.0f + (growthStage * 0.3f);
             float heightScale = 1.0f + (growthStage * 3.0f);
             float widthScale = 0.8f + (growthStage * 0.2f);
@@ -161,6 +173,7 @@ public class TilledPlot : MonoBehaviour, Interactable
         }
         else
         {
+            // fallback sphere that grows and changes color
             plantVisual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             plantVisual.transform.SetParent(transform);
             
@@ -170,6 +183,7 @@ public class TilledPlot : MonoBehaviour, Interactable
             plantVisual.transform.localPosition = Vector3.up * height;
             plantVisual.transform.localScale = Vector3.one * size;
             
+            // different color for each growth stage
             Color[] stageColors = new Color[]
             {
                 new Color(0.8f, 0.7f, 0.3f),
@@ -181,10 +195,9 @@ public class TilledPlot : MonoBehaviour, Interactable
             plantVisual.GetComponent<Renderer>().material.color = stageColors[growthStage];
             Destroy(plantVisual.GetComponent<Collider>());
         }
-        
-        Debug.Log($"Crop grew to stage {growthStage}");
     }
 
+    // get the right prefab for the current growth stage
     private GameObject GetPrefabForStage(int stage)
     {
         switch (stage)
@@ -197,30 +210,28 @@ public class TilledPlot : MonoBehaviour, Interactable
         }
     }
 
+    // harvest the crop and give items to player
     private void Harvest(GameObject player)
     {
         InvManager inventoryManager = FindObjectOfType<InvManager>();
         if (inventoryManager != null && plantedCrop != null)
         {
+            // give harvested crop items
             if (plantedCrop.harvestItem != null)
             {
                 int cropAmount = plantedCrop.harvestYield > 0 ? plantedCrop.harvestYield : 1;
                 inventoryManager.AddItem(plantedCrop.harvestItem, cropAmount);
-                Debug.Log($"Harvested {cropAmount}x {plantedCrop.harvestItem.itemName}!");
             }
             
+            // give seeds back
             if (plantedCrop.seedItem != null)
             {
                 int seedAmount = plantedCrop.seedYield > 0 ? plantedCrop.seedYield : 1;
                 inventoryManager.AddItem(plantedCrop.seedItem, seedAmount);
-                Debug.Log($"Received {seedAmount}x {plantedCrop.seedItem.itemName}!");
-            }
-            else
-            {
-                Debug.LogWarning($"No seed item set for {plantedCrop.itemName}!");
             }
         }
 
+        // cleanup and reset the plot
         if (plantVisual != null) Destroy(plantVisual);
         
         isPlanted = false;
@@ -229,8 +240,7 @@ public class TilledPlot : MonoBehaviour, Interactable
         plantedAtHour = 0f;
     }
 
-
-
+    // remove colliders from plant visuals so player can walk through
     private void RemoveAllColliders(GameObject obj)
     {
         Collider[] colliders = obj.GetComponents<Collider>();

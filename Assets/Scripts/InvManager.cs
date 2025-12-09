@@ -9,14 +9,9 @@ public class InvManager : MonoBehaviour
 
     public ItemSlot[] itemSlot;
 
-    void Start()
-    {
-
-    }
-
     void Update()
     {
-        if(Input.GetButtonDown("Inventory") && menuActiviated)
+        if (Input.GetButtonDown("Inventory") && menuActiviated)
         {
             Time.timeScale = 1;
             InvMenu.SetActive(false);
@@ -25,7 +20,7 @@ public class InvManager : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
-        else if(Input.GetButtonDown("Inventory") && !menuActiviated)
+        else if (Input.GetButtonDown("Inventory") && !menuActiviated)
         {
             Time.timeScale = 0;
             InvMenu.SetActive(true);
@@ -38,11 +33,7 @@ public class InvManager : MonoBehaviour
 
     public int AddItem(ItemSO itemData, int quantity)
     {
-        if (itemData == null)
-        {
-            Debug.LogWarning("Trying to add null items to inventory");
-            return quantity;
-        }
+        if (itemData == null) return quantity;
 
         int remainingQuantity = quantity;
 
@@ -51,11 +42,7 @@ public class InvManager : MonoBehaviour
             if (itemSlot[i].itemData == itemData && itemSlot[i].quantity > 0 && !itemSlot[i].isFull)
             {
                 remainingQuantity = itemSlot[i].AddItem(itemData, remainingQuantity);
-                
-                if (remainingQuantity <= 0)
-                {
-                    return 0;
-                }
+                if (remainingQuantity <= 0) return 0;
             }
         }
 
@@ -64,11 +51,7 @@ public class InvManager : MonoBehaviour
             if (itemSlot[i].quantity == 0)
             {
                 remainingQuantity = itemSlot[i].AddItem(itemData, remainingQuantity);
-                
-                if (remainingQuantity <= 0)
-                {
-                    return 0;
-                }
+                if (remainingQuantity <= 0) return 0;
             }
         }
 
@@ -77,26 +60,16 @@ public class InvManager : MonoBehaviour
 
     public bool RemoveItem(ItemSO itemData, int quantity)
     {
-        if (itemData == null)
-        {
-            Debug.LogWarning("Trying to remove null item from inventory");
-            return false;
-        }
+        if (itemData == null) return false;
 
         for (int i = 0; i < itemSlot.Length; i++)
         {
             if (itemSlot[i].itemData == itemData && itemSlot[i].quantity > 0)
             {
-                bool success = itemSlot[i].RemoveItem(quantity);
-                if (success)
-                {
-                    Debug.Log($"Removed {quantity} {itemData.itemName} from inventory");
-                    return true;
-                }
+                return itemSlot[i].RemoveItem(quantity);
             }
         }
 
-        Debug.LogWarning($"Could not remove {itemData.itemName} - not found in inventory");
         return false;
     }
 

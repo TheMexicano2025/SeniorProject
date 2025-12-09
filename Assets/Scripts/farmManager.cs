@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script manages the farming system
+// it creates tilled plots when you use a hoe and handles grid snapping
 public class farmManager : MonoBehaviour
 {
     [Header("Tilling Settings")]
@@ -12,11 +14,9 @@ public class farmManager : MonoBehaviour
     public float snapToGrid = 1f;
 
     [Header("Growth Settings")]
-    [Tooltip("Hours between each growth stage")]
     public float hoursPerStage = 2f;
 
     [Header("Growth Stage Prefabs (Optional)")]
-    [Tooltip("Leave empty to use default shapes")]
     public GameObject stage0Prefab;
     public GameObject stage1Prefab;
     public GameObject stage2Prefab;
@@ -25,40 +25,33 @@ public class farmManager : MonoBehaviour
     private List<TilledPlot> tilledPlots = new List<TilledPlot>();
 
     [Header("Zone Restriction")]
-    [Tooltip("Optional: Restrict tilling to this zone only")]
     public TillingZone allowedTillingZone;
-
-    [Tooltip("Message shown when trying to till outside the zone")]
     public string outsideZoneMessage = "You can only till soil in the farm plot area!";
 
     public bool TillSoil(Vector3 position, GameObject player)
     {
         EquipManager equipManager = player.GetComponent<EquipManager>();
-        if (equipManager == null)
-        {
-            Debug.LogWarning("FarmingManager: Player has no EquipManager!");
-            return false;
-        }
+        if (equipManager == null) return false;
 
         ItemSO equippedItem = equipManager.GetEquippedItem();
         
+        // make sure player has a hoe equipped
         if (equippedItem == null || equippedItem.toolType != ItemSO.ToolType.Hoe)
         {
-            Debug.Log("You need a hoe to till the soil!");
             return false;
         }
 
         Vector3 snappedPosition = SnapToGrid(position);
         
+        // check if we're inside the allowed farming zone
         if (allowedTillingZone != null && !allowedTillingZone.IsPositionInZone(snappedPosition))
         {
-            Debug.Log(outsideZoneMessage);
             return false;
         }
         
+        // don't till the same spot twice
         if (IsAlreadyTilled(snappedPosition))
         {
-            Debug.Log("This soil is already tilled!");
             return false;
         }
 
@@ -66,7 +59,7 @@ public class farmManager : MonoBehaviour
         return true;
     }
 
-
+    // snap position to grid so plots line up nicely
     private Vector3 SnapToGrid(Vector3 position)
     {
         float x = Mathf.Round(position.x / snapToGrid) * snapToGrid;
@@ -74,6 +67,7 @@ public class farmManager : MonoBehaviour
         return new Vector3(x, position.y, z);
     }
 
+    // check if there's already a plot at this position
     private bool IsAlreadyTilled(Vector3 position)
     {
         tilledPlots.RemoveAll(plot => plot == null);
@@ -90,7 +84,6 @@ public class farmManager : MonoBehaviour
                 
                 if (xDiff < (snapToGrid * 0.5f) && zDiff < (snapToGrid * 0.5f))
                 {
-                    Debug.LogWarning($"Cannot till - plot already exists at ({plotPos.x}, {plotPos.z})");
                     return true;
                 }
             }
@@ -98,7 +91,7 @@ public class farmManager : MonoBehaviour
         return false;
     }
 
-
+    // create a new tilled plot at the position
     private void CreateTilledPlot(Vector3 position)
     {
         GameObject plotObject;
@@ -109,6 +102,7 @@ public class farmManager : MonoBehaviour
         }
         else
         {
+            // if no prefab assigned make a simple brown cube
             plotObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             
             Vector3 adjustedPosition = new Vector3(position.x, position.y - (plotHeight / 2f), position.z);
@@ -119,7 +113,7 @@ public class farmManager : MonoBehaviour
             renderer.material.color = new Color(0.4f, 0.25f, 0.1f);
             
             BoxCollider plotCollider = plotObject.GetComponent<BoxCollider>();
-            if(plotCollider != null)
+            if (plotCollider != null)
             {
                 plotCollider.isTrigger = true;
                 plotCollider.center = new Vector3(0, 1.5f, 0);
@@ -130,12 +124,14 @@ public class farmManager : MonoBehaviour
         plotObject.name = $"TilledPlot_{tilledPlots.Count}";
         plotObject.layer = LayerMask.NameToLayer("Item");
 
+        // add or get the TilledPlot component
         TilledPlot tilledPlot = plotObject.GetComponent<TilledPlot>();
         if (tilledPlot == null)
         {
             tilledPlot = plotObject.AddComponent<TilledPlot>();
         }
         
+        // pass growth settings to the plot
         tilledPlot.hoursPerStage = hoursPerStage;
         tilledPlot.stage0Prefab = stage0Prefab;
         tilledPlot.stage1Prefab = stage1Prefab;
@@ -143,7 +139,5 @@ public class farmManager : MonoBehaviour
         tilledPlot.stage3Prefab = stage3Prefab;
 
         tilledPlots.Add(tilledPlot);
-
-        Debug.Log($"Created tilled plot at {position}");
     }
 }

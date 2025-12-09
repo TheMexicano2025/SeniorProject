@@ -2,34 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script handles a double door gate that swings open and closed
 public class SwingGate : MonoBehaviour, Interactable
 {
     [Header("Door References")]
-    [Tooltip("Left door (Fence_1)")]
     public Transform leftDoor;
-    
-    [Tooltip("Right door (Fence_2)")]
     public Transform rightDoor;
     
     [Header("Left Door Settings")]
-    [Tooltip("Left door closed rotation Y")]
     public float leftClosedRotationY = -180f;
-    
-    [Tooltip("Left door open rotation Y")]
     public float leftOpenRotationY = -90f;
     
     [Header("Right Door Settings")]
-    [Tooltip("Right door closed rotation Y")]
     public float rightClosedRotationY = 0f;
-    
-    [Tooltip("Right door open rotation Y")]
     public float rightOpenRotationY = -90f;
     
     [Header("Animation Settings")]
-    [Tooltip("How fast the doors swing (seconds)")]
     public float swingDuration = 1f;
-    
-    [Tooltip("Are the doors currently open?")]
     public bool isOpen = false;
     
     private bool isSwinging = false;
@@ -49,14 +38,11 @@ public class SwingGate : MonoBehaviour, Interactable
 
     public string GetInteractionPrompt()
     {
-        if (isSwinging)
-        {
-            return "";
-        }
-        
+        if (isSwinging) return "";
         return isOpen ? "Close Gate [E]" : "Open Gate [E]";
     }
 
+    // smoothly swing both doors open or closed
     private IEnumerator ToggleDoors()
     {
         isSwinging = true;
@@ -91,6 +77,7 @@ public class SwingGate : MonoBehaviour, Interactable
             yield return null;
         }
         
+        // make sure doors end at exact rotation
         if (leftDoor != null)
         {
             leftDoor.rotation = Quaternion.Euler(0f, leftEndRotation, 0f);
@@ -103,8 +90,5 @@ public class SwingGate : MonoBehaviour, Interactable
         
         isOpen = !isOpen;
         isSwinging = false;
-        
-        Debug.Log($"Gate is now {(isOpen ? "open" : "closed")}");
     }
 }
-

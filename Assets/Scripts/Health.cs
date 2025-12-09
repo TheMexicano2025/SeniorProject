@@ -3,53 +3,47 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
+// controls health for all entities in the game
+// it also handles taking damage, healing, dying, and visual feedback when hit
 public class Health : MonoBehaviour
 {
     [Header("Health Settings")]
-    [Tooltip("Maximum health points")]
     public float maxHealth = 100f;
-    
-    [Tooltip("Current health points")]
     [SerializeField] private float currentHealth;
     
     [Header("Death Settings")]
-    [Tooltip("Should this entity be destroyed on death?")]
-    public bool destroyOnDeath = false;
-    
-    [Tooltip("Delay before destroying (seconds)")]
-    public float destroyDelay = 0f;
+    public bool destroyOnDeath = false; 
+    public float destroyDelay = 0f; 
     
     [Header("Hit Feedback")]
-    [Tooltip("Should entity be knocked back when hit?")]
-    public bool enableKnockback = true;
-    
-    [Tooltip("Force of knockback")]
-    public float knockbackForce = 5f;
-    
-    [Tooltip("Duration of hit flash effect")]
-    public float flashDuration = 0.1f;
-    
-    [Tooltip("Color to flash when hit")]
-    public Color flashColor = Color.red;
+    public bool enableKnockback = true; 
+    public float knockbackForce = 5f; 
+    public float flashDuration = 0.1f; 
+    public Color flashColor = Color.red; 
     
     [Header("Events")]
-    public UnityEvent<float> onHealthChanged;
+    // these events let other scripts know when things happen to health
+    public UnityEvent<float> onHealthChanged; 
     public UnityEvent<float, float> onDamageTaken;
     public UnityEvent onDeath;
-    public UnityEvent onHealed;
+    public UnityEvent onHealed; 
     
     private bool isDead = false;
     private Rigidbody rb;
-    private Renderer[] renderers;
-    private Color[] originalColors;
+    private Renderer[] renderers; 
+    private Color[] originalColors; 
     private Material[] originalMaterials;
 
     private void Start()
     {
+        // start with full health
         currentHealth = maxHealth;
         onHealthChanged?.Invoke(currentHealth);
         
+        // get rigidbody for knockback
         rb = GetComponent<Rigidbody>();
+        
+        // find all the renderers so we can flash them when hit
         renderers = GetComponentsInChildren<Renderer>();
         
         if (renderers.Length > 0)
@@ -57,6 +51,7 @@ public class Health : MonoBehaviour
             originalColors = new Color[renderers.Length];
             originalMaterials = new Material[renderers.Length];
             
+            // remember the original colors so we can restore them later
             for (int i = 0; i < renderers.Length; i++)
             {
                 if (renderers[i].material != null)
@@ -68,59 +63,61 @@ public class Health : MonoBehaviour
         }
     }
 
+    // take damage without knockback direction
     public void TakeDamage(float damage)
     {
         TakeDamage(damage, Vector3.zero);
     }
 
+    // take damage with knockback in a direction
     public void TakeDamage(float damage, Vector3 hitDirection)
     {
-        if (isDead) return;
+        if (isDead) return; // can't damage something that's already dead
         
         float previousHealth = currentHealth;
         currentHealth -= damage;
-        currentHealth = Mathf.Max(0, currentHealth);
+        currentHealth = Mathf.Max(0, currentHealth); // don't go below zero
         
-        Debug.Log($"{gameObject.name} took {damage} damage. Health: {currentHealth}/{maxHealth}");
-        
+        // tell other scripts that damage happened
         onDamageTaken?.Invoke(damage, currentHealth);
         onHealthChanged?.Invoke(currentHealth);
         
+        // push the object back if knockback is enabled
         if (enableKnockback && hitDirection != Vector3.zero && rb != null)
         {
             Vector3 knockbackDir = hitDirection.normalized;
-            knockbackDir.y = 0.3f;
+            knockbackDir.y = 0.3f; 
             rb.AddForce(knockbackDir * knockbackForce, ForceMode.Impulse);
         }
         
+        // flash red to show we got hit
         StartCoroutine(FlashEffect());
         
+        // check if we should die
         if (currentHealth <= 0 && !isDead)
         {
             Die();
         }
     }
 
+    // restore health
     public void Heal(float amount)
     {
-        if (isDead) return;
+        if (isDead) return; // can't heal if dead
         
         float previousHealth = currentHealth;
         currentHealth += amount;
-        currentHealth = Mathf.Min(currentHealth, maxHealth);
-        
-        Debug.Log($"{gameObject.name} healed {amount}. Health: {currentHealth}/{maxHealth}");
+        currentHealth = Mathf.Min(currentHealth, maxHealth); // don't go over max health
         
         onHealed?.Invoke();
         onHealthChanged?.Invoke(currentHealth);
     }
 
+    // handle death
     private void Die()
     {
         isDead = true;
-        Debug.Log($"{gameObject.name} has died!");
-        
-        onDeath?.Invoke();
+        onDeath?.Invoke(); // let other scripts know we died
         
         if (destroyOnDeath)
         {
@@ -128,10 +125,12 @@ public class Health : MonoBehaviour
         }
     }
 
-    private IEnumerator FlashEffect()
+    // flash the object red when it takes damage
+    private System.Collections.IEnumerator FlashEffect()
     {
         if (renderers == null || renderers.Length == 0) yield break;
         
+        // turn all renderers red
         for (int i = 0; i < renderers.Length; i++)
         {
             if (renderers[i] != null && renderers[i].material != null)
@@ -140,8 +139,9 @@ public class Health : MonoBehaviour
             }
         }
         
-        yield return new WaitForSeconds(flashDuration);
+        yield return new UnityEngine.WaitForSeconds(flashDuration);
         
+        // change back to original colors
         for (int i = 0; i < renderers.Length; i++)
         {
             if (renderers[i] != null && renderers[i].material != null && i < originalColors.Length)
@@ -151,6 +151,7 @@ public class Health : MonoBehaviour
         }
     }
 
+    // helper functions other scripts can use to check health status
     public float GetCurrentHealth()
     {
         return currentHealth;
@@ -171,6 +172,7 @@ public class Health : MonoBehaviour
         return isDead;
     }
 
+    // manually set health to a specific value
     public void SetHealth(float newHealth)
     {
         currentHealth = Mathf.Clamp(newHealth, 0, maxHealth);
@@ -182,6 +184,7 @@ public class Health : MonoBehaviour
         }
     }
 
+    // reset health back to full 
     public void ResetHealth()
     {
         isDead = false;

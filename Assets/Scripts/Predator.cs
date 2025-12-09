@@ -2,43 +2,30 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script controls enemy AI behavior
+// predators hunt for cows and attack the player if damaged
 public class Predator : MonoBehaviour
 {
     [Header("AI Behavior")]
-    [Tooltip("How far the predator can detect targets")]
     public float detectionRange = 20f;
-    
-    [Tooltip("Movement speed")]
     public float moveSpeed = 3.5f;
-    
-    [Tooltip("How close before attacking")]
     public float attackRange = 2f;
-    
-    [Tooltip("Damage per attack")]
     public float attackDamage = 10f;
-    
-    [Tooltip("Time between attacks (seconds)")]
     public float attackCooldown = 2f;
 
     [Header("Target Priority")]
-    [Tooltip("Prefer cows over player?")]
-    public bool preferCows = true;
-    
-    [Tooltip("How long to focus on attacker after being hit (seconds)")]
-    public float aggroDuration = 10f;
+    public bool preferCows = true; // will hunt cows before attacking player
+    public float aggroDuration = 10f; // how long to chase player after being hit
 
     [Header("Loot")]
-    [Tooltip("Item to drop on death")]
     public ItemSO lootItem;
-    
-    [Tooltip("Amount to drop")]
     public int lootAmount = 1;
 
     [Header("References")]
     public GameObject lootPrefab;
 
     private Transform currentTarget;
-    private Transform aggroTarget;
+    private Transform aggroTarget; // player who damaged us
     private float aggroEndTime;
     private Health health;
     private Rigidbody rb;
@@ -78,6 +65,7 @@ public class Predator : MonoBehaviour
         }
     }
 
+    // when damaged switch to attacking the player
     private void OnDamageTaken(float damage, float currentHealth)
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -89,13 +77,14 @@ public class Predator : MonoBehaviour
             {
                 aggroTarget = player.transform;
                 aggroEndTime = Time.time + aggroDuration;
-                Debug.Log($"{gameObject.name} is now aggro on the player!");
             }
         }
     }
 
+    // find the best target to attack
     private void FindTarget()
     {
+        // if we're angry at the player attack them first
         if (aggroTarget != null && Time.time < aggroEndTime)
         {
             currentTarget = aggroTarget;
@@ -109,6 +98,7 @@ public class Predator : MonoBehaviour
         GameObject bestTarget = null;
         float closestDistance = detectionRange;
 
+        // look for cows first if we prefer them
         if (preferCows)
         {
             GameObject[] cows = GameObject.FindGameObjectsWithTag("Cow");
@@ -123,6 +113,7 @@ public class Predator : MonoBehaviour
             }
         }
 
+        // if no cows nearby go for the player
         if (bestTarget == null)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -139,6 +130,7 @@ public class Predator : MonoBehaviour
         currentTarget = bestTarget != null ? bestTarget.transform : null;
     }
 
+    // move toward the current target
     private void MoveTowardsTarget()
     {
         Vector3 direction = (currentTarget.position - transform.position).normalized;
@@ -147,23 +139,30 @@ public class Predator : MonoBehaviour
         if (rb != null)
         {
             Vector3 targetVelocity = direction * moveSpeed;
-            targetVelocity.y = rb.velocity.y;
-            rb.velocity = targetVelocity;
+            rb.velocity = new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z);
         }
         else
         {
             transform.position += direction * moveSpeed * Time.deltaTime;
         }
 
+        // face the target
         if (direction != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(direction);
         }
     }
 
+    // attack the target if cooldown is ready
     private void AttackTarget()
     {
         if (Time.time - lastAttackTime < attackCooldown) return;
+
+        // stop moving while attacking
+        if (rb != null)
+        {
+            rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+        }
 
         Health targetHealth = currentTarget.GetComponent<Health>();
         if (targetHealth != null)
@@ -171,8 +170,6 @@ public class Predator : MonoBehaviour
             Vector3 attackDirection = (currentTarget.position - transform.position).normalized;
             targetHealth.TakeDamage(attackDamage, attackDirection);
             lastAttackTime = Time.time;
-
-            Debug.Log($"{gameObject.name} attacked {currentTarget.name} for {attackDamage} damage!");
         }
     }
 
@@ -183,6 +180,7 @@ public class Predator : MonoBehaviour
         Destroy(gameObject, 0.5f);
     }
 
+    // drop loot when killed
     private void DropLoot()
     {
         if (lootItem != null && lootPrefab != null)
@@ -195,11 +193,10 @@ public class Predator : MonoBehaviour
                 itemComponent.itemData = lootItem;
                 itemComponent.quantity = lootAmount;
             }
-
-            Debug.Log($"{gameObject.name} dropped {lootAmount}x {lootItem.itemName}!");
         }
     }
 
+    // draw detection and attack ranges in editor
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;

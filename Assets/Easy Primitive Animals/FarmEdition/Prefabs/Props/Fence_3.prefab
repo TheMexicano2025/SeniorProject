@@ -533,8 +533,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cac4ad4df2a9148e8987457359260461, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slipThroughChance: 30
+  slipThroughChance: 15.1
   slipThroughCooldown: 2
+  teleportDistance: 1.5
+  groundCheckDistance: 10
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &4367383831645548238
 GameObject:
   m_ObjectHideFlags: 0

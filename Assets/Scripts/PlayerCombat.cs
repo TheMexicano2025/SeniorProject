@@ -3,29 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// this script handles player attacking with weapons
+// left click to attack enemies in front of you
 public class PlayerCombat : MonoBehaviour
 {
     [Header("Attack Settings")]
-    [Tooltip("Base attack damage")]
     public float baseDamage = 20f;
-    
-    [Tooltip("Attack range in meters")]
     public float attackRange = 2f;
-    
-    [Tooltip("Cooldown between attacks")]
     public float attackCooldown = 0.5f;
-    
-    [Tooltip("Angle of attack arc")]
-    public float attackAngle = 60f;
-    
+    public float attackAngle = 60f; // cone angle in front of player
+
     [Header("Visual Feedback")]
-    [Tooltip("UI Image to flash when attacking")]
     public Image attackFlashImage;
-    
-    [Tooltip("Flash color")]
     public Color flashColor = new Color(1f, 0f, 0f, 0.3f);
-    
-    [Tooltip("How long the flash lasts")]
     public float flashDuration = 0.1f;
     
     [Header("References")]
@@ -47,15 +37,12 @@ public class PlayerCombat : MonoBehaviour
             {
                 orientation = orientationObj.transform;
             }
-            else
-            {
-                Debug.LogWarning("PlayerCombat: Orientation not found! Attacks will use player body direction.");
-            }
         }
     }
 
     private void Update()
     {
+        // left click to attack
         if (Input.GetMouseButtonDown(0))
         {
             TryAttack();
@@ -64,6 +51,7 @@ public class PlayerCombat : MonoBehaviour
         UpdateFlash();
     }
 
+    // check if player can attack
     private void TryAttack()
     {
         if (Time.time < lastAttackTime + attackCooldown)
@@ -78,6 +66,7 @@ public class PlayerCombat : MonoBehaviour
         
         ItemSO equippedItem = equipManager?.GetEquippedItem();
         
+        // only attack if holding a sword
         if (equippedItem == null || equippedItem.toolType != ItemSO.ToolType.Sword)
         {
             return;
@@ -92,6 +81,7 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
+    // deal damage to all enemies in front of player
     private void PerformAttack(ItemSO weapon)
     {
         float totalDamage = baseDamage + weapon.attackDamage;
@@ -102,6 +92,7 @@ public class PlayerCombat : MonoBehaviour
         
         Vector3 attackOrigin = transform.position + Vector3.up * 0.5f;
         
+        // find all colliders in attack range
         Collider[] hitColliders = Physics.OverlapSphere(attackOrigin, attackRange);
         
         foreach (Collider col in hitColliders)
@@ -115,6 +106,7 @@ public class PlayerCombat : MonoBehaviour
             
             if (directionToTarget.sqrMagnitude < 0.01f) continue;
             
+            // check if target is in front of player within attack angle
             float angleToTarget = Vector3.Angle(attackDirection, directionToTarget);
             
             if (angleToTarget > attackAngle / 2f) continue;
@@ -123,11 +115,11 @@ public class PlayerCombat : MonoBehaviour
             if (targetHealth != null)
             {
                 targetHealth.TakeDamage(totalDamage);
-                Debug.Log($"Hit {col.gameObject.name} for {totalDamage} damage!");
             }
         }
     }
 
+    // fade out the attack flash effect
     private void UpdateFlash()
     {
         if (attackFlashImage == null) return;
@@ -145,6 +137,7 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
+    // draw attack range and cone in editor
     private void OnDrawGizmosSelected()
     {
         if (!showDebugGizmos) return;

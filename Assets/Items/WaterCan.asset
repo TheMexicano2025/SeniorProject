@@ -25,7 +25,9 @@ MonoBehaviour:
   seedItem: {fileID: 0}
   harvestYield: 1
   seedYield: 1
-  sellPrice: 2
   buyPrice: 8
-  canSell: 1
-  canBuy: 1
+  sellPrice: 2
+  canBuy: 0
+  canSell: 0
+  attackDamage: 0
+  healAmount: 0

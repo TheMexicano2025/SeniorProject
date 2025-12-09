@@ -2,13 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script makes an NPC open a shop when you interact with them
 public class ShopNPC : MonoBehaviour, Interactable
 {
     [Header("Shop Settings")]
     [SerializeField] private string shopName = "Merchant";
     
     [Header("Shop Inventory")]
-    [Tooltip("Items available for purchase")]
     [SerializeField] private ItemSO[] itemsForSale;
 
     private ShopUI shopUI;
@@ -34,10 +34,5 @@ public class ShopNPC : MonoBehaviour, Interactable
         {
             shopUI.OpenShop(itemsForSale, shopName);
         }
-        else
-        {
-            Debug.LogWarning("ShopUI not found in scene!");
-        }
     }
 }
-

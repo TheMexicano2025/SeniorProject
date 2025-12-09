@@ -226,8 +226,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   detectionRange: 60
-  moveSpeed: 5
-  attackRange: 2
+  moveSpeed: 6.5
+  attackRange: 2.5
   attackDamage: 10
   attackCooldown: 2
   preferCows: 1

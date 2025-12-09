@@ -4,32 +4,22 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+// this script displays player health as hearts or a health bar
 public class HealthUI : MonoBehaviour
 {
     [Header("Display Mode")]
-    [Tooltip("Choose how to display health")]
     public HealthDisplayMode displayMode = HealthDisplayMode.Hearts;
     
     [Header("Heart Display")]
-    [Tooltip("Container for heart icons")]
     public Transform heartsContainer;
-    
-    [Tooltip("Heart sprite (full)")]
     public Sprite fullHeartSprite;
-    
-    [Tooltip("Heart sprite (empty)")]
     public Sprite emptyHeartSprite;
-    
-    [Tooltip("How much health per heart")]
-    public float healthPerHeart = 20f;
+    public float healthPerHeart = 20f; // each heart represents this much health
     
     private Image[] heartImages;
     
     [Header("Health Bar Display")]
-    [Tooltip("Health bar fill image")]
     public Image healthBarFill;
-    
-    [Tooltip("Health text display")]
     public TMP_Text healthText;
     
     [Header("References")]
@@ -44,6 +34,7 @@ public class HealthUI : MonoBehaviour
 
     private void Start()
     {
+        // find player health if not assigned
         if (playerHealth == null)
         {
             playerHealth = FindObjectOfType<PlayerCombat>()?.GetComponent<Health>();
@@ -55,10 +46,6 @@ public class HealthUI : MonoBehaviour
             InitializeDisplay();
             UpdateHealthDisplay(playerHealth.GetCurrentHealth());
         }
-        else
-        {
-            Debug.LogError("HealthUI: No player Health component found!");
-        }
     }
 
     private void InitializeDisplay()
@@ -69,14 +56,12 @@ public class HealthUI : MonoBehaviour
         }
     }
 
+    // create heart images based on max health
     private void CreateHearts()
     {
-        if (heartsContainer == null || fullHeartSprite == null)
-        {
-            Debug.LogWarning("HealthUI: Hearts container or sprite not assigned!");
-            return;
-        }
+        if (heartsContainer == null || fullHeartSprite == null) return;
         
+        // clear any existing hearts
         foreach (Transform child in heartsContainer)
         {
             Destroy(child.gameObject);
@@ -112,6 +97,7 @@ public class HealthUI : MonoBehaviour
         }
     }
 
+    // update heart sprites based on current health
     private void UpdateHearts(float currentHealth)
     {
         if (heartImages == null || heartImages.Length == 0) return;
@@ -124,6 +110,7 @@ public class HealthUI : MonoBehaviour
             
             if (i < fullHearts)
             {
+                // this heart is full
                 heartImages[i].sprite = fullHeartSprite;
                 heartImages[i].color = Color.white;
             }
@@ -133,11 +120,13 @@ public class HealthUI : MonoBehaviour
                 
                 if (remainingHealth > 0)
                 {
+                    // this heart is partially full
                     heartImages[i].sprite = fullHeartSprite;
                     heartImages[i].fillAmount = remainingHealth / healthPerHeart;
                 }
                 else
                 {
+                    // this heart is empty
                     if (emptyHeartSprite != null)
                     {
                         heartImages[i].sprite = emptyHeartSprite;
@@ -153,6 +142,7 @@ public class HealthUI : MonoBehaviour
         }
     }
 
+    // update health bar fill and text
     private void UpdateHealthBar(float currentHealth)
     {
         if (healthBarFill != null)
@@ -160,6 +150,7 @@ public class HealthUI : MonoBehaviour
             float healthPercent = currentHealth / playerHealth.GetMaxHealth();
             healthBarFill.fillAmount = healthPercent;
             
+            // color shifts from red to green based on health
             healthBarFill.color = Color.Lerp(Color.red, Color.green, healthPercent);
         }
         
@@ -177,4 +168,3 @@ public class HealthUI : MonoBehaviour
         }
     }
 }
-

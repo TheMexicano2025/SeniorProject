@@ -35,11 +35,6 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
             {
                 inventoryManager = invCanvas.GetComponent<InvManager>();
             }
-            
-            if (inventoryManager == null)
-            {
-                Debug.LogWarning("ItemSlot: Could not find InventoryCanvas with InvManager in Start()!");
-            }
         }
 
         canvas = GetComponentInParent<Canvas>();
@@ -47,20 +42,14 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
 
     public int AddItem(ItemSO newData, int addedQty)
     {
-        if(isFull)
-        {
-            return addedQty;
-        }
+        if (isFull) return addedQty;
 
         if (itemData == null)
         {
             itemData = newData;
         }
 
-        if (itemData != newData)
-        {
-            return addedQty;
-        }
+        if (itemData != newData) return addedQty;
 
         itemImage.sprite = itemData.itemSprite;
         itemImage.enabled = true;
@@ -79,7 +68,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
             quantity = maxStack;
             return extraItems;
         }
-        quantityText.text= quantity.ToString();
+        quantityText.text = quantity.ToString();
         quantityText.enabled = true;
         
         return 0;
@@ -99,10 +88,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
 
     public void OnLeftClick()
     {
-        if (itemData == null)
-        {
-            return;
-        }
+        if (itemData == null) return;
 
         if (inventoryManager == null)
         {
@@ -113,11 +99,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
             }
         }
 
-        if (inventoryManager == null)
-        {
-            Debug.LogWarning("ItemSlot.OnLeftClick: inventoryManager is null!");
-            return;
-        }
+        if (inventoryManager == null) return;
 
         inventoryManager.DeselectAllSlots();
         
@@ -248,12 +230,9 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
 
     public bool RemoveItem(int removeQty)
     {
-        if (itemData == null || quantity <= 0)
-        {
-            return false;
-        }
+        if (itemData == null || quantity <= 0) return false;
 
-    quantity -= removeQty;
+        quantity -= removeQty;
 
         if (quantity <= 0)
         {
@@ -267,8 +246,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, 
             return true;
         }
 
-    quantityText.text = quantity.ToString();
-    return true;
+        quantityText.text = quantity.ToString();
+        return true;
     }
-
 }

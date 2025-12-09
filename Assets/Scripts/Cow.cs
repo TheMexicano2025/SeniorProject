@@ -2,64 +2,34 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this script controls cow behavior including growing up breeding and milking
+// cows age each day and can be fed corn to breed or milked with a bottle
 public class Cow : MonoBehaviour
 {
     [Header("Lifecycle")]
-    [Tooltip("Is this cow a baby?")]
     public bool isBaby = true;
-    
-    [Tooltip("Days until baby becomes adult")]
     public int daysToGrowUp = 3;
-    
-    [Tooltip("Current age in days")]
     public int currentAge = 0;
-    
-    [Tooltip("Adult cow prefab to spawn when grown")]
     public GameObject adultCowPrefab;
     
     [Header("Breeding")]
-    [Tooltip("Can this cow breed?")]
     public bool canBreed = false;
-    
-    [Tooltip("Days cooldown after breeding")]
     public int breedingCooldownDays = 2;
-    
-    [Tooltip("Days until can breed again")]
     public int breedingCooldown = 0;
-    
-    [Tooltip("Baby cow prefab to spawn from breeding")]
     public GameObject babyCowPrefab;
-    
-    [Tooltip("Speed when moving to mate")]
     public float matingMoveSpeed = 2f;
-    
-    [Tooltip("How long the breeding animation lasts")]
     public float breedingDuration = 3f;
-    
-    [Tooltip("How far to push parents apart after breeding")]
-    public float separationDistance = 3f;
+    public float separationDistance = 3f; // how far apart to push cows after breeding
     
     [Header("Milking")]
-    [Tooltip("Can this cow be milked?")]
     public bool canBeMilked = false;
-    
-    [Tooltip("Days cooldown after milking")]
     public int milkCooldownDays = 1;
-    
-    [Tooltip("Days until can be milked again")]
     public int milkCooldown = 0;
-    
-    [Tooltip("Milk item to give when milked")]
     public ItemSO milkItem;
-    
-    [Tooltip("Should the empty bottle be consumed when milking?")]
-    public bool consumeBottle = true;
+    public bool consumeBottle = true; // does milking use up the bottle
     
     [Header("Death Drops")]
-    [Tooltip("Item to drop on death")]
     public ItemSO meatDrop;
-    
-    [Tooltip("Amount of meat to drop")]
     public int meatDropAmount = 2;
     
     [Header("References")]
@@ -91,6 +61,7 @@ public class Cow : MonoBehaviour
             originalMoveSpeed = animalController.movSpeed;
         }
         
+        // subscribe to new day events to age the cow
         if (dayNightManager != null && !hasSubscribedToDay)
         {
             dayNightManager.onNewDay.AddListener(OnNewDay);
@@ -107,12 +78,14 @@ public class Cow : MonoBehaviour
 
     private void Update()
     {
+        // if in love mode move toward mate
         if (isInLoveMode && targetMate != null && !isBreeding)
         {
             MoveTowardsMate();
         }
     }
 
+    // called every new day to age the cow and reset cooldowns
     private void OnNewDay()
     {
         currentAge++;
@@ -135,11 +108,11 @@ public class Cow : MonoBehaviour
         UpdateStatus();
     }
 
+    // turn baby cow into adult cow
     private void GrowUp()
     {
         if (adultCowPrefab == null)
         {
-            Debug.LogWarning("No adult cow prefab assigned!");
             isBaby = false;
             UpdateStatus();
             return;
@@ -156,31 +129,26 @@ public class Cow : MonoBehaviour
             adultCowScript.currentAge = currentAge;
         }
         
-        Debug.Log($"{gameObject.name} has grown into an adult cow!");
-        
         Destroy(gameObject);
     }
 
+    // update what the cow can do based on age and cooldowns
     private void UpdateStatus()
     {
         canBreed = !isBaby && breedingCooldown <= 0;
         canBeMilked = !isBaby && milkCooldown <= 0;
     }
 
+    // called when player feeds corn to the cow
     public void EnterLoveMode()
     {
-        if (!canBreed || isBaby)
-        {
-            Debug.Log("This cow is not ready to breed!");
-            return;
-        }
+        if (!canBreed || isBaby) return;
         
         isInLoveMode = true;
-        Debug.Log($"{gameObject.name} entered love mode!");
-        
         FindNearbyMate();
     }
 
+    // look for another cow in love mode to breed with
     private void FindNearbyMate()
     {
         Cow[] allCows = FindObjectsOfType<Cow>();
@@ -192,8 +160,6 @@ public class Cow : MonoBehaviour
                 targetMate = otherCow;
                 otherCow.targetMate = this;
                 
-                Debug.Log($"{gameObject.name} found mate: {otherCow.gameObject.name}");
-                
                 if (animalController != null)
                 {
                     animalController.movSpeed = matingMoveSpeed;
@@ -202,10 +168,9 @@ public class Cow : MonoBehaviour
                 return;
             }
         }
-        
-        Debug.Log($"{gameObject.name} is waiting for a mate...");
     }
 
+    // move toward the mate until close enough to breed
     private void MoveTowardsMate()
     {
         if (targetMate == null)
@@ -233,12 +198,14 @@ public class Cow : MonoBehaviour
         }
     }
 
+    // breed with mate and spawn a baby cow
     private IEnumerator BreedWithMate()
     {
         if (targetMate == null || isBreeding) yield break;
         
         isBreeding = true;
         
+        // disable wandering AI during breeding
         if (animalController != null)
         {
             animalController.enabled = false;
@@ -249,10 +216,9 @@ public class Cow : MonoBehaviour
             targetMate.animalController.enabled = false;
         }
         
-        Debug.Log($"{gameObject.name} breeding with {targetMate.gameObject.name}");
-        
         yield return new WaitForSeconds(breedingDuration);
         
+        // spawn baby cow between the two parents
         if (babyCowPrefab != null && targetMate != null)
         {
             Vector3 midpoint = (transform.position + targetMate.transform.position) / 2f;
@@ -268,10 +234,9 @@ public class Cow : MonoBehaviour
                 babyCowScript.isBaby = true;
                 babyCowScript.currentAge = 0;
             }
-            
-            Debug.Log("A baby cow was born!");
         }
         
+        // push cows apart and set breeding cooldown
         if (targetMate != null)
         {
             Vector3 directionAway = (transform.position - targetMate.transform.position).normalized;
@@ -289,10 +254,9 @@ public class Cow : MonoBehaviour
         ForceExitLoveMode();
     }
 
+    // exit love mode and return to normal behavior
     public void ForceExitLoveMode()
     {
-        Debug.Log($"{gameObject.name} exiting love mode");
-        
         isInLoveMode = false;
         isBreeding = false;
         targetMate = null;
@@ -301,28 +265,16 @@ public class Cow : MonoBehaviour
         {
             animalController.movSpeed = originalMoveSpeed;
             animalController.enabled = true;
-            Debug.Log($"{gameObject.name} AnimalController re-enabled");
-        }
-        else
-        {
-            Debug.LogWarning($"{gameObject.name} has no AnimalController!");
         }
         
         UpdateStatus();
     }
 
+    // milk the cow when interacted with bottle
     public bool TryMilk(GameObject player, ItemSO bottleItem)
     {
         if (!canBeMilked)
         {
-            if (isBaby)
-            {
-                Debug.Log("This cow is too young to milk!");
-            }
-            else
-            {
-                Debug.Log($"This cow was recently milked. Wait {milkCooldown} more day(s).");
-            }
             return false;
         }
         
@@ -335,7 +287,6 @@ public class Cow : MonoBehaviour
             }
             
             inventory.AddItem(milkItem, 1);
-            Debug.Log("Collected milk from cow!");
         }
         
         milkCooldown = milkCooldownDays;
@@ -344,6 +295,7 @@ public class Cow : MonoBehaviour
         return true;
     }
 
+    // drop meat when cow dies
     private void OnDeath()
     {
         if (meatDrop != null)
@@ -352,13 +304,13 @@ public class Cow : MonoBehaviour
             if (inventory != null)
             {
                 inventory.AddItem(meatDrop, meatDropAmount);
-                Debug.Log($"Cow dropped {meatDropAmount}x {meatDrop.itemName}");
             }
         }
     }
 
     private void OnDestroy()
     {
+        // clean up event listeners
         if (dayNightManager != null && hasSubscribedToDay)
         {
             dayNightManager.onNewDay.RemoveListener(OnNewDay);
@@ -370,6 +322,7 @@ public class Cow : MonoBehaviour
         }
     }
 
+    // get cow status info for debugging
     public string GetCowInfo()
     {
         if (isBaby)

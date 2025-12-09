@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// this is a scriptable object that holds all the data for an item
+// you can create new items in the project window with right click > inventory > item
 [CreateAssetMenu(fileName = "New Item", menuName = "Inventory/Item")]
 public class ItemSO: ScriptableObject
 {
@@ -77,4 +79,3 @@ public class ItemSO: ScriptableObject
         CornSeed
     }
 }
-

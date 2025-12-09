@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 public class HotbarSelect : MonoBehaviour
 {
     [Header("HotbarSlots")]
-    [Tooltip("Drag the 6 HotbarSlots GO here")]
     public GameObject[] HBSlots = new GameObject[6];
 
     [Header("References")]
-    [Tooltip("Drag the InvManager here")]
     public InvManager inventoryManager;
 
     private int currentItem = 0;
@@ -42,26 +39,15 @@ public class HotbarSelect : MonoBehaviour
         if (slotIndex < 0 || slotIndex >= HBSlots.Length)
             return;
 
-        Debug.Log($"SelectSlot called with index: {slotIndex}");
-
         for (int i = 0; i < HBSlots.Length; i++)
         {
-            if (HBSlots[i] == null)
-            {
-                Debug.LogWarning($"HBSlots[{i}] is null!");
-                continue;
-            }
+            if (HBSlots[i] == null) continue;
 
             Transform highlightTransform = HBSlots[i].transform.Find("selectHigh");
             if (highlightTransform != null)
             {
                 bool shouldBeActive = (i == slotIndex);
                 highlightTransform.gameObject.SetActive(shouldBeActive);
-                Debug.Log($"Slot {i} highlight set to: {shouldBeActive}");
-            }
-            else
-            {
-                Debug.LogWarning($"Could not find 'selectHigh' in {HBSlots[i].name}");
             }
         }
         currentItem = slotIndex;
@@ -77,34 +63,24 @@ public class HotbarSelect : MonoBehaviour
 
     private void UpdateDisplay()
     {
-        if (inventoryManager == null)
-            return;
-
-        if (inventoryManager.itemSlot == null)
+        if (inventoryManager == null || inventoryManager.itemSlot == null)
             return;
 
         for (int i = 0; i < HBSlots.Length; i++)
         {
-            if (HBSlots[i] == null)
-                continue;
-
-            if (i >= inventoryManager.itemSlot.Length)
+            if (HBSlots[i] == null || i >= inventoryManager.itemSlot.Length)
                 continue;
 
             ItemSlot invSlot = inventoryManager.itemSlot[i];
-            
-            if (invSlot == null)
-                continue;
+            if (invSlot == null) continue;
             
             Transform imageTransform = HBSlots[i].transform.Find("hbImage");
-            if (imageTransform == null)
-                continue;
+            if (imageTransform == null) continue;
 
             Image iconImage = imageTransform.GetComponent<Image>();
-            if (iconImage == null)
-                continue;
+            if (iconImage == null) continue;
 
-            if(invSlot.itemData != null && invSlot.quantity > 0)
+            if (invSlot.itemData != null && invSlot.quantity > 0)
             {
                 iconImage.sprite = invSlot.itemData.itemSprite;
                 iconImage.enabled = true;
