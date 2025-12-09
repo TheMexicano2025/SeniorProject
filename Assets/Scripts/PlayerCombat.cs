@@ -97,6 +97,9 @@ public class PlayerCombat : MonoBehaviour
         float totalDamage = baseDamage + weapon.attackDamage;
         
         Vector3 attackDirection = orientation != null ? orientation.forward : transform.forward;
+        attackDirection.y = 0;
+        attackDirection.Normalize();
+        
         Vector3 attackOrigin = transform.position + Vector3.up * 0.5f;
         
         Collider[] hitColliders = Physics.OverlapSphere(attackOrigin, attackRange);
@@ -106,7 +109,12 @@ public class PlayerCombat : MonoBehaviour
             if (col.gameObject == gameObject) continue;
             
             Vector3 targetCenter = col.bounds.center;
-            Vector3 directionToTarget = (targetCenter - attackOrigin).normalized;
+            Vector3 directionToTarget = (targetCenter - attackOrigin);
+            directionToTarget.y = 0;
+            directionToTarget.Normalize();
+            
+            if (directionToTarget.sqrMagnitude < 0.01f) continue;
+            
             float angleToTarget = Vector3.Angle(attackDirection, directionToTarget);
             
             if (angleToTarget > attackAngle / 2f) continue;
@@ -115,6 +123,7 @@ public class PlayerCombat : MonoBehaviour
             if (targetHealth != null)
             {
                 targetHealth.TakeDamage(totalDamage);
+                Debug.Log($"Hit {col.gameObject.name} for {totalDamage} damage!");
             }
         }
     }
