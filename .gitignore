@@ -19,3 +19,9 @@ AcreLife_WebGL_*/
 # OS junk
 .DS_Store
 Thumbs.db
+
+.bezisidekick/
+UserSettings/
+Bezi.Editor.csproj
+.vscode/
+*.csproj
